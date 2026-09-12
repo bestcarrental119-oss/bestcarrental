@@ -1,0 +1,447 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── App-like viewport behaviour (prevent zoom/scroll jank on mobile) ───────── */
+html {
+  -webkit-text-size-adjust: 100%;   /* iOS: never auto-enlarge text */
+  text-size-adjust: 100%;
+  touch-action: manipulation;        /* disable double-tap-to-zoom */
+  overscroll-behavior-y: none;       /* no rubber-band that reveals blank areas */
+}
+/* iOS zooms into any input whose font-size < 16px on focus — keep them ≥16px. */
+@media (max-width: 767px) {
+  input, select, textarea { font-size: 16px; }
+}
+
+/* ── Notch / status-bar safe area (viewport-fit=cover draws under the bar) ──── */
+/* The fixed top header must sit below the status bar so its buttons are tappable. */
+header.app-header { padding-top: env(safe-area-inset-top); }
+/* Page top-offsets that clear the fixed header (~4rem tall) plus the status bar. */
+.pt-appbar    { padding-top: calc(env(safe-area-inset-top) + 4rem); }
+.pt-appbar-lg { padding-top: calc(env(safe-area-inset-top) + 5rem); }
+
+/* ── White × Purple Design System ─────────────────────────────────────────── */
+:root {
+  /* Brand */
+  --color-primary:        #7C3AED;
+  --color-primary-dark:   #6D28D9;
+  --color-primary-darker: #5B21B6;
+  --color-primary-light:  #f3e8ff;
+  --color-accent:         #a855f7;
+  --color-accent-light:   #e9d5ff;
+
+  /* Surfaces */
+  --color-bg:             #ffffff;
+  --color-bg-subtle:      #faf5ff;
+  --color-bg-muted:       #f5f3ff;
+  --color-surface:        #ffffff;
+  --color-surface-raised: #faf5ff;
+
+  /* Borders */
+  --color-border:         #e9d5ff;
+  --color-border-subtle:  #f3e8ff;
+
+  /* Text */
+  --color-text:           #111827;
+  --color-text-secondary: #374151;
+  --color-muted:          #6b7280;
+  --color-faint:          #9ca3af;
+
+  /* Semantic */
+  --color-success:        #059669;
+  --color-warning:        #d97706;
+  --color-danger:         #dc2626;
+  --color-info:           #2563eb;
+
+  /* Shadows */
+  --shadow-sm:    0 1px 3px rgba(124,58,237,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:    0 4px 16px rgba(124,58,237,.12), 0 2px 6px rgba(0,0,0,.06);
+  --shadow-lg:    0 10px 32px rgba(124,58,237,.16), 0 4px 12px rgba(0,0,0,.08);
+  --shadow-xl:    0 20px 48px rgba(124,58,237,.20), 0 8px 24px rgba(0,0,0,.10);
+
+  /* Radii */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  16px;
+  --radius-xl:  20px;
+  --radius-card: 16px;
+
+  /* Gradients */
+  --grad-primary: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  --grad-soft:    linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  --grad-hero:    linear-gradient(135deg, #4c1d95 0%, #7c3aed 40%, #a855f7 70%, #c084fc 100%);
+}
+
+/* ── Base reset ────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans',
+               'Hiragino Kaku Gothic ProN', 'Noto Sans JP', Roboto, sans-serif;
+}
+
+/* ── Native-app feel ───────────────────────────────────────────────────────── */
+/* Remove the mobile tap flash and the 300ms delay; kill accidental double-tap
+   zoom on controls so taps feel instant like a native app. */
+html { -webkit-text-size-adjust: 100%; }
+body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;            /* no rubber-band chaining to the page */
+  text-rendering: optimizeLegibility;
+}
+button, a, [role="button"], input[type="submit"], .tappable {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;             /* instant taps, no double-tap zoom */
+  user-select: none;
+}
+/* Press feedback: every button/link gently scales on touch, like iOS/Android. */
+button:not(:disabled):active,
+a:active,
+[role="button"]:active,
+.tappable:active {
+  transform: scale(0.97);
+  transition: transform 0.04s ease;
+}
+button, a, [role="button"] { transition: transform 0.12s ease, background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease; }
+/* Smooth momentum scrolling for inner scroll areas. */
+.overflow-y-auto, .overflow-auto, .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+/* Let text inputs / editable fields keep normal selection. */
+input, textarea, select, [contenteditable] { user-select: auto; -webkit-user-select: auto; }
+
+/* Clears fixed bottom navigation (mobile) so page content is never hidden
+   behind it. Height = nav (~64px) + gap + iOS home indicator safe area. */
+.pb-app-nav { padding-bottom: calc(env(safe-area-inset-bottom) + 92px); }
+@media (min-width: 768px) { .pb-app-nav { padding-bottom: 2.5rem; } }
+
+/* Respect the notch / status bar at the very top on mobile web-app mode. */
+@supports (padding: max(0px)) {
+  .safe-top { padding-top: max(env(safe-area-inset-top), 0px); }
+}
+
+/* Airbnb-style map card pop-up (mobile: pin tap → card slides up from bottom). */
+@keyframes sheetUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Native app (Capacitor) only adaptations ───────────────────────────────── */
+/* No iOS long-press "save image / copy link" callouts — feels like a real app. */
+.is-native-app button,
+.is-native-app a,
+.is-native-app img { -webkit-touch-callout: none; }
+/* No accidental text selection anywhere except real inputs. */
+.is-native-app { -webkit-user-select: none; user-select: none; }
+.is-native-app input,
+.is-native-app textarea,
+.is-native-app [contenteditable] { -webkit-user-select: auto; user-select: auto; }
+/* Helpers to show/hide chrome depending on app vs. web. */
+.is-native-app .hide-in-app { display: none !important; }
+.show-in-app { display: none; }
+.is-native-app .show-in-app { display: revert; }
+/* Give the fixed header room for the status bar when the webview draws behind it. */
+.is-native-app header.app-header { padding-top: env(safe-area-inset-top); }
+
+/* Clean horizontal tab strips: hide the scrollbar but keep swipe scrolling. */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* A pill tab strip that scrolls sideways and sticks under the header. */
+.tab-strip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.tab-strip::-webkit-scrollbar { display: none; }
+.tab-strip > * { scroll-snap-align: start; flex: 0 0 auto; }
+
+/* ── App launch loader / splash ─────────────────────────────────────────────── */
+.app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #ede9fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  opacity: 1;
+  animation: loaderIn 0.5s ease both;
+}
+.app-loader--hide {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.app-loader__frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.app-loader__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transform: scale(1.06);
+  animation: loaderZoom 5s ease-out both;
+}
+.app-loader__shine {
+  position: absolute;
+  top: -40%;
+  left: -60%;
+  width: 55%;
+  height: 180%;
+  transform: rotate(18deg);
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+  animation: loaderShine 2.8s ease-in-out 0.4s infinite;
+  pointer-events: none;
+}
+.app-loader__shine--2 { width: 38%; opacity: 0.6; animation: loaderShine 2.8s ease-in-out 1.5s infinite; }
+
+/* 画像本体：ボケ→フォーカスで登場しつつ、ゆっくりズーム＆パン（ケンバーンズ） */
+.app-loader__img { animation: owFocus 1s ease-out both, loaderKen 7s ease-out both; }
+
+/* 中央上の光のパルス */
+.app-loader__glow {
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+  background: radial-gradient(60% 42% at 50% 32%, rgba(255,255,255,0.4), transparent 70%);
+  animation: owGlowPulse 2.6s ease-in-out infinite;
+}
+
+/* 上昇するキラキラ粒子 */
+.app-loader__particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.app-loader__particles span {
+  position: absolute; bottom: -12px; width: 7px; height: 7px; border-radius: 9999px;
+  background: rgba(255,255,255,0.95); box-shadow: 0 0 10px rgba(255,255,255,0.9);
+  animation: owRise linear infinite;
+}
+
+/* 下部：プログレスバー＋点滅ドット */
+.app-loader__bottom { position: absolute; left: 0; right: 0; bottom: 0; }
+.app-loader__bar {
+  position: relative; height: 4px; background: rgba(255,255,255,0.22); overflow: hidden;
+}
+.app-loader__bar::after {
+  content: ''; position: absolute; inset: 0; width: 42%;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  animation: loaderBar 1.15s ease-in-out infinite;
+}
+.app-loader__dots { display: flex; gap: 7px; justify-content: center; padding: 12px 0 calc(env(safe-area-inset-bottom) + 16px); }
+.app-loader__dots span {
+  width: 9px; height: 9px; border-radius: 9999px; background: #fff; opacity: 0.5;
+  box-shadow: 0 0 8px rgba(255,255,255,0.7); animation: owBlink 1s infinite;
+}
+.app-loader__dots span:nth-child(2) { animation-delay: 0.15s; }
+.app-loader__dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes loaderIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes loaderZoom { from { transform: scale(1.06); } to { transform: scale(1); } }
+@keyframes loaderKen  { 0% { transform: scale(1.14) translateY(2%); } 100% { transform: scale(1) translateY(0); } }
+@keyframes owFocus    { from { filter: blur(16px); opacity: 0; } to { filter: blur(0); opacity: 1; } }
+@keyframes loaderShine { from { left: -60%; } to { left: 150%; } }
+@keyframes loaderBar  { from { transform: translateX(-120%); } to { transform: translateX(320%); } }
+@keyframes owGlowPulse { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.6; } }
+@keyframes owBlink { 0%, 100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.15); } }
+@keyframes owRise {
+  0%   { transform: translateY(0) scale(0.5); opacity: 0; }
+  12%  { opacity: 1; }
+  100% { transform: translateY(-112vh) scale(1); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-loader__img { animation: none; transform: none; filter: none; }
+  .app-loader__shine, .app-loader__particles, .app-loader__glow { display: none; }
+}
+
+/* ── Tab grid: all tabs visible at once, wraps to rows (no sideways scroll) ──── */
+.tab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+  gap: 0.375rem;
+}
+@media (min-width: 640px) {
+  .tab-grid { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar        { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  { background: #d8b4fe; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #a855f7; }
+
+/* ── Animations ────────────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(124,58,237,.0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.animate-spin     { animation: spin 1s linear infinite; }
+.animate-float    { animation: float 6s ease-in-out infinite; }
+.animate-fade-up  { animation: fadeUp 0.35s ease forwards; }
+.animate-fade-in  { animation: fadeIn 0.25s ease forwards; }
+.animate-scale-in { animation: scaleIn 0.25s ease forwards; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ── Skeleton shimmer ──────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #f3e8ff 25%, #e9d5ff 50%, #f3e8ff 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ── Glass card ────────────────────────────────────────────────────────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Purple gradient button ────────────────────────────────────────────────── */
+.btn-primary {
+  background: var(--grad-primary);
+  color: #fff;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  transition: filter .2s, transform .15s, box-shadow .2s;
+  box-shadow: 0 4px 14px rgba(124,58,237,.35);
+}
+.btn-primary:hover   { filter: brightness(1.08); box-shadow: 0 6px 20px rgba(124,58,237,.45); }
+.btn-primary:active  { transform: scale(0.98); }
+.btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Card base ─────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .25s, border-color .25s, transform .25s;
+}
+.card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-accent-light);
+}
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: #c084fc;
+}
+
+/* ── Form inputs ───────────────────────────────────────────────────────────── */
+.input {
+  background: #faf5ff;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  font-size: .875rem;
+  padding: .625rem 1rem;
+  transition: border-color .2s, box-shadow .2s;
+  width: 100%;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(124,58,237,.12);
+}
+.input::placeholder { color: var(--color-faint); }
+
+/* ── Tag / pill ────────────────────────────────────────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-accent-light);
+  color: var(--color-primary-dark);
+  border-radius: 999px;
+  font-size: .6875rem;
+  font-weight: 600;
+  padding: .2rem .6rem;
+}
+
+/* ── Run-of-fleet badge pulse ──────────────────────────────────────────────── */
+.rof-badge-pulse {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* ── Leaflet overrides ─────────────────────────────────────────────────────── */
+.leaflet-container { font-family: inherit; }
+.leaflet-pane,  .leaflet-popup { z-index: 10 !important; }
+.leaflet-top,   .leaflet-bottom { z-index: 11 !important; }
+.leaflet-control-attribution { font-size: 10px; }
+.leaflet-tile { border-radius: 0 !important; }
+
+/* ── Modal backdrop ────────────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,.38);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center; padding: 1rem;
+  animation: fadeIn .2s ease;
+}
+.modal-box {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--color-border);
+  animation: scaleIn .2s ease;
+  overflow: hidden;
+  width: 100%; max-width: 32rem;
+}
+
+/* ── Section divider ───────────────────────────────────────────────────────── */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+  margin: 2rem 0;
+}
+
+/* ── Utility: purple text gradient ────────────────────────────────────────── */
+.text-grad {
+  background: var(--grad-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
