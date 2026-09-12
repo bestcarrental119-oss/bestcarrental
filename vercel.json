@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/inspection-reminder",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/auto-review",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/charge-due",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/purge-pickup-records",
+      "schedule": "0 3 * * 0"
+    }
+  ]
+}
