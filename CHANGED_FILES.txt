@@ -1,0 +1,28 @@
+今回の変更ファイル一覧（2026-07-25）
+リポジトリのルートでこの構造のまま上書き展開してください。
+
+■ 新規追加 (NEW)
+  lib/otp.js                                          … 6桁コードの生成/保存/検証
+  app/api/auth/email-otp/route.js                     … コード送信/検証API（登録・メール変更）
+  app/reset-password/page.jsx                         … パスワード再設定ページ
+  supabase/migrations/20260725_email_otp_and_account_admin.sql … email_otpsテーブル
+  変更点まとめ_2026-07-25_今回の追加.md                … 説明書
+
+■ 変更 (MODIFIED)
+  lib/email.js                                        … sendVerificationCode 追加
+  lib/i18n.js                                         … ブランド名（全言語）
+  lib/i18nOneWay.js                                   … ブランド名（全言語）
+  lib/i18nOwnerAdmin.js                               … 削除文言・pp_button（全言語）
+  lib/oneWay.js                                       … コメント内ブランド名
+  app/api/admin/users/route.js                        … DELETE（連鎖削除＋admin検証）
+  app/api/owner/cross-return/route.js                 … ブランド名（メッセージ）
+  app/api/owner/locations/route.js                    … ブランド名（コメント）
+  components/AuthModal.jsx                             … 登録コード認証＋パスワード忘れ
+  components/MyPage.jsx                                … メール変更UI＋受取QR表示条件
+  components/AdminApp.jsx                              … アカウント削除ボタン
+  components/OwnerDashboard.jsx                        … ブランド名（表示タイトル）
+  components/CrossReturnPanel.jsx                      … ブランド名（コメント）
+  components/FrontendApp.jsx                           … ブランド名（コメント）
+  components/oneway/OneWayBanner.jsx                   … ブランド名（コメント）
+  components/oneway/OneWayPublishLauncher.jsx          … ブランド名（表示）
+  components/oneway/OwnerLocationsManager.jsx          … ブランド名（コメント）
